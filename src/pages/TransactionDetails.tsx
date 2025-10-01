@@ -4,8 +4,9 @@ import { ethers } from "ethers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Navigation } from "@/components/Navigation";
 
 const TransactionDetails = () => {
   const { txHash } = useParams();
@@ -67,102 +68,128 @@ const TransactionDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+      <Navigation />
+      
+      <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
           <Link to="/">
             <Button variant="ghost" size="sm" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Explorer
+              Back to Dashboard
             </Button>
           </Link>
           <div className="flex items-center gap-3">
-            <ArrowRight className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold">Transaction Details</h1>
-              <p className="text-muted-foreground font-mono text-sm break-all">{txHash}</p>
+            <div className="p-3 rounded-lg bg-primary/10">
+              <Send className="h-8 w-8 text-primary" />
             </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold mb-1">Transaction Details</h1>
+              <p className="text-muted-foreground font-mono text-xs sm:text-sm break-all">{txHash}</p>
+            </div>
+            {receipt && (
+              <Badge 
+                variant={receipt.status === 1 ? "default" : "destructive"} 
+                className="gap-1 hidden sm:flex"
+              >
+                {receipt.status === 1 ? (
+                  <>
+                    <CheckCircle2 className="h-3 w-3" />
+                    Success
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-3 w-3" />
+                    Failed
+                  </>
+                )}
+              </Badge>
+            )}
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-8">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Transaction Information</CardTitle>
-              {receipt && (
-                <Badge variant={receipt.status === 1 ? "default" : "destructive"} className="gap-1">
-                  {receipt.status === 1 ? (
-                    <>
-                      <CheckCircle2 className="h-3 w-3" />
-                      Success
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="h-3 w-3" />
-                      Failed
-                    </>
-                  )}
-                </Badge>
-              )}
-            </div>
+            <CardTitle>Transaction Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4">
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Transaction Hash:</span>
-                <span className="font-mono text-sm break-all max-w-md text-right">{transaction.hash}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
+                <span className="text-muted-foreground font-medium">Status:</span>
+                {receipt && (
+                  <Badge 
+                    variant={receipt.status === 1 ? "default" : "destructive"} 
+                    className="gap-1 w-fit"
+                  >
+                    {receipt.status === 1 ? (
+                      <>
+                        <CheckCircle2 className="h-3 w-3" />
+                        Success
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-3 w-3" />
+                        Failed
+                      </>
+                    )}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
+                <span className="text-muted-foreground font-medium">Transaction Hash:</span>
+                <span className="font-mono text-xs sm:text-sm break-all text-right">{transaction.hash}</span>
               </div>
               {transaction.blockNumber && (
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Block:</span>
+                <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
+                  <span className="text-muted-foreground font-medium">Block:</span>
                   <Link to={`/block/${transaction.blockNumber}`} className="font-mono font-semibold text-primary hover:underline">
                     {transaction.blockNumber}
                   </Link>
                 </div>
               )}
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">From:</span>
-                <Link to={`/address/${transaction.from}`} className="font-mono text-sm text-primary hover:underline break-all max-w-md text-right">
+              <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
+                <span className="text-muted-foreground font-medium">From:</span>
+                <Link to={`/address/${transaction.from}`} className="font-mono text-xs sm:text-sm text-primary hover:underline break-all text-right">
                   {transaction.from}
                 </Link>
               </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">To:</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
+                <span className="text-muted-foreground font-medium">To:</span>
                 {transaction.to ? (
-                  <Link to={`/address/${transaction.to}`} className="font-mono text-sm text-primary hover:underline break-all max-w-md text-right">
+                  <Link to={`/address/${transaction.to}`} className="font-mono text-xs sm:text-sm text-primary hover:underline break-all text-right">
                     {transaction.to}
                   </Link>
                 ) : (
                   <span className="text-muted-foreground">Contract Creation</span>
                 )}
               </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Value:</span>
-                <span className="font-mono font-semibold">
+              <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
+                <span className="text-muted-foreground font-medium">Value:</span>
+                <span className="font-mono font-semibold text-primary">
                   {ethers.formatEther(transaction.value)} ETH
                 </span>
               </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Gas Price:</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
+                <span className="text-muted-foreground font-medium">Gas Price:</span>
                 <span className="font-mono">
                   {transaction.gasPrice ? ethers.formatUnits(transaction.gasPrice, "gwei") : "N/A"} Gwei
                 </span>
               </div>
               {receipt && (
                 <>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-muted-foreground">Gas Used:</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
+                    <span className="text-muted-foreground font-medium">Gas Used:</span>
                     <span className="font-mono">{receipt.gasUsed.toString()}</span>
                   </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-muted-foreground">Confirmations:</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
+                    <span className="text-muted-foreground font-medium">Confirmations:</span>
                     <span className="font-semibold">{receipt.confirmations || 0}</span>
                   </div>
                 </>
               )}
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Nonce:</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
+                <span className="text-muted-foreground font-medium">Nonce:</span>
                 <span className="font-mono">{transaction.nonce}</span>
               </div>
               {transaction.data && transaction.data !== "0x" && (

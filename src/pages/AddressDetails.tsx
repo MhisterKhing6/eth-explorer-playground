@@ -4,8 +4,10 @@ import { ethers } from "ethers";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Wallet, Search } from "lucide-react";
+import { ArrowLeft, Wallet, Search, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Navigation } from "@/components/Navigation";
+import { MetricCard } from "@/components/MetricCard";
 
 const AddressDetails = () => {
   const { address: paramAddress } = useParams();
@@ -61,37 +63,45 @@ const AddressDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+      <Navigation />
+      
+      <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
           <Link to="/">
             <Button variant="ghost" size="sm" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Explorer
+              Back to Dashboard
             </Button>
           </Link>
           <div className="flex items-center gap-3 mb-6">
-            <Wallet className="h-8 w-8 text-primary" />
+            <div className="p-3 rounded-lg bg-primary/10">
+              <Wallet className="h-8 w-8 text-primary" />
+            </div>
             <div>
               <h1 className="text-3xl font-bold">Address Lookup</h1>
               <p className="text-muted-foreground">Check any Ethereum address balance</p>
             </div>
           </div>
 
-          <div className="flex gap-2 max-w-2xl">
-            <Input
-              placeholder="Enter Ethereum address (0x...)"
-              value={searchAddress}
-              onChange={(e) => setSearchAddress(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-              className="flex-1 font-mono"
-            />
-            <Button onClick={handleSearch}>
-              <Search className="h-4 w-4 mr-2" />
-              Search
-            </Button>
-          </div>
+          <Card className="max-w-2xl border-2 border-primary/20">
+            <CardContent className="pt-6">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter Ethereum address (0x...)"
+                  value={searchAddress}
+                  onChange={(e) => setSearchAddress(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                  className="flex-1 font-mono"
+                />
+                <Button onClick={handleSearch} size="lg">
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </header>
+      </div>
 
       <main className="container mx-auto px-4 py-8">
         {loading ? (
@@ -104,25 +114,24 @@ const AddressDetails = () => {
             <Card className="mb-8">
               <CardHeader>
                 <CardTitle>Address Information</CardTitle>
-                <CardDescription className="font-mono break-all">{address}</CardDescription>
+                <CardDescription className="font-mono text-xs sm:text-sm break-all">{address}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardDescription>Balance</CardDescription>
-                      <CardTitle className="text-3xl font-mono">{parseFloat(balance).toFixed(6)} ETH</CardTitle>
-                    </CardHeader>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardDescription>Transaction Count</CardDescription>
-                      <CardTitle className="text-3xl">{transactionCount.toLocaleString()}</CardTitle>
-                    </CardHeader>
-                  </Card>
-                </div>
-              </CardContent>
             </Card>
+
+            <div className="grid gap-4 md:grid-cols-2 mb-8">
+              <MetricCard
+                title="Balance"
+                value={`${parseFloat(balance).toFixed(6)} ETH`}
+                icon={Wallet}
+                description={`~$${(parseFloat(balance) * 2247.82).toFixed(2)} USD`}
+              />
+              <MetricCard
+                title="Total Transactions"
+                value={transactionCount.toLocaleString()}
+                icon={Activity}
+                description="Lifetime transaction count"
+              />
+            </div>
 
             <Card>
               <CardHeader>
