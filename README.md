@@ -1,73 +1,147 @@
-# Welcome to your Lovable project
+# ChainExplorer - Multi-Chain Blockchain Explorer
 
-## Project info
+🔍 **Explore transactions, blocks, and addresses across multiple blockchain networks**
 
-**URL**: https://lovable.dev/projects/8118c59c-80e5-4e27-9e69-8bce0b765cfa
+ChainExplorer is a modern, responsive blockchain explorer that provides real-time data and analytics for multiple blockchain networks including Bitcoin, Ethereum, Polygon, and more.
 
-## How can I edit this code?
+## 🌟 Features
 
-There are several ways of editing your application.
+### **Multi-Chain Support**
+- **9 Networks**: Bitcoin, Ethereum, BNB Chain, Avalanche, Polygon, Optimism, Arbitrum, Base, Soneium
+- **Real-Time Data**: Live blockchain data from Alchemy SDK and CoinGecko APIs
+- **Network Switching**: Seamless switching between different blockchain networks
 
-**Use Lovable**
+### **Comprehensive Search**
+- **Block Explorer**: Search blocks by number with detailed transaction lists
+- **Transaction Details**: View complete transaction information with gas fees
+- **Address Lookup**: Check balances and transaction history for any address
+- **Smart Search**: Auto-detect search type (block, transaction, address)
+- **ENS Support**: Ready for ENS domain resolution (coming soon)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8118c59c-80e5-4e27-9e69-8bce0b765cfa) and start prompting.
+### **Real-Time Analytics**
+- **Live Price Charts**: 24-hour price history with multiple timeframes (1h, 24h, 7d, 30d)
+- **Market Data**: Real-time market cap, trading volume, and supply information
+- **Network Status**: Live network health, TPS, and gas price indicators
+- **Transaction Volume**: Hourly transaction count visualization
 
-Changes made via Lovable will be committed automatically to this repo.
+### **Advanced Features**
+- **Time Filters**: Analyze data across different time periods
+- **Transaction Categories**: Color-coded transaction types (DeFi, Transfer, Contract)
+- **Copy to Clipboard**: One-click copying of addresses and hashes
+- **Search History**: Recent searches with suggestions
+- **Dark/Light Theme**: Persistent theme preferences
+- **Responsive Design**: Mobile-friendly interface
 
-**Use your preferred IDE**
+## 🚀 Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
+- Node.js 18+ and npm
+- Git
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Installation
 
-Follow these steps:
+```bash
+# Clone the repository
+git clone https://github.com/MhisterKhing6/eth-explorer-playground
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Navigate to project directory
+cd chainexplorer
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install dependencies
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Docker Deployment
 
-**Use GitHub Codespaces**
+```bash
+# Build Docker image
+docker build -t chainexplorer .
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Run container
+docker run -p 8080:8080 chainexplorer
+```
 
-## What technologies are used for this project?
+## 🛠️ Technology Stack
 
-This project is built with:
+- **Frontend**: React 18, TypeScript, Vite
+- **UI Components**: shadcn/ui, Tailwind CSS
+- **Charts**: Recharts
+- **Blockchain APIs**: Alchemy SDK, CoinGecko API
+- **Routing**: React Router
+- **State Management**: React Context
+- **Icons**: Lucide React
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🔧 Configuration
 
-## How can I deploy this project?
+### API Keys
+- **Alchemy SDK**: Configured for blockchain data
+- **CoinGecko**: Premium API key for enhanced rate limits
+- **Bitcoin**: Uses Blockstream API for Bitcoin-specific data
 
-Simply open [Lovable](https://lovable.dev/projects/8118c59c-80e5-4e27-9e69-8bce0b765cfa) and click on Share -> Publish.
+### Supported Networks
+| Network | Currency | API Support |
+|---------|----------|-------------|
+| Bitcoin | BTC | Blockstream |
+| Ethereum | ETH | Alchemy |
+| BNB Chain | BNB | Alchemy |
+| Avalanche | AVAX | Alchemy |
+| Polygon | MATIC | Alchemy |
+| Optimism | ETH | Alchemy |
+| Arbitrum | ETH | Alchemy |
+| Base | ETH | Alchemy |
+| Soneium | SONEIUM | Alchemy |
 
-## Can I connect a custom domain to my Lovable project?
+## 📱 Features Overview
 
-Yes, you can!
+### Dashboard
+- Network status indicators
+- Real-time price metrics with trends
+- Interactive price and volume charts
+- Latest blocks and transactions
+- Time-based filtering
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Block Explorer
+- Detailed block information
+- Transaction search within blocks
+- Pagination for large transaction lists
+- Miner and timestamp details
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### Transaction Details
+- Complete transaction information
+- Network-specific gas units
+- Status indicators
+- Copy functionality for hashes and addresses
+
+### Address Lookup
+- Balance checking
+- Transaction history
+- Portfolio value calculation
+- Search and filtering capabilities
+
+## 🎨 UI/UX Features
+
+- **Responsive Design**: Works on desktop, tablet, and mobile
+- **Dark/Light Theme**: Automatic system preference detection
+- **Loading States**: Smooth loading indicators
+- **Error Handling**: User-friendly error messages
+- **Search Hints**: Helpful examples for different search types
+- **Copy to Clipboard**: Easy copying of blockchain data
+
+## 🔗 Links
+
+- **Developer**: [KBEmpire](https://mhisterkhing6.github.io/personalportfolio/)
+- **GitHub**: [MhisterKhing6](https://github.com/MhisterKhing6)
+- **LinkedIn**: [Botchway Kingsley](https://www.linkedin.com/in/botchway-kingsley-410097374)
+
+## 📄 License
+
+© 2024 KBEmpire. All rights reserved.
+
+---
+
+**ChainExplorer** - Making blockchain data accessible and beautiful 🚀
