@@ -1,4 +1,5 @@
 import { Blocks, Github, Linkedin, Globe } from "lucide-react";
+import { VisitorCounter } from "@/components/VisitorCounter";
 
 export const Footer = () => {
   return (
@@ -30,9 +31,12 @@ export const Footer = () => {
             <p className="text-sm text-muted-foreground mb-1">
               Explore transactions, blocks, and addresses across multiple blockchain networks
             </p>
-            <p className="text-xs text-muted-foreground">
-              © 2024 <span className="font-semibold">KBEmpire</span>. All rights reserved.
-            </p>
+            <div className="flex flex-col items-center md:items-end gap-2">
+              <VisitorCounter />
+              <p className="text-xs text-muted-foreground">
+                © 2024 <span className="font-semibold">KBEmpire</span>. All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
       </div>

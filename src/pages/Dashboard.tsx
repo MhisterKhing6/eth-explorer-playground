@@ -443,34 +443,7 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        {/* Network Status */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              Network Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">Online</div>
-                <div className="text-xs text-muted-foreground">Network Health</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">{selectedNetwork === 'bitcoin' ? '7 TPS' : selectedNetwork === 'ethereum' ? '15 TPS' : '100+ TPS'}</div>
-                <div className="text-xs text-muted-foreground">Transactions/sec</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-500">Medium</div>
-                <div className="text-xs text-muted-foreground">Gas Price</div>
-              </div>
-            </div>
-            <div className="mt-3 text-xs text-muted-foreground">
-              <span className="font-medium">Search examples:</span> Block: 12345 • Transaction: 0x1a2b3c... • Address: 0x742d35... • ENS: vitalik.eth
-            </div>
-          </CardContent>
-        </Card>
+
 
         {/* Metrics Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
@@ -510,6 +483,30 @@ const Dashboard = () => {
             icon={Database}
             description={`${getNativeCurrency(selectedNetwork)} in circulation`}
           />
+          <MetricCard
+            title="Network Status"
+            value="Online"
+            icon={Zap}
+            description="Network health"
+            trend={{ value: "Active", isPositive: true }}
+          />
+          <MetricCard
+            title="TPS"
+            value={selectedNetwork === 'bitcoin' ? '7' : selectedNetwork === 'ethereum' ? '15' : '100+'}
+            icon={Activity}
+            description="Transactions/sec"
+          />
+          <MetricCard
+            title="Gas Price"
+            value="Medium"
+            icon={DollarSign}
+            description="Current gas cost"
+          />
+        </div>
+        
+        {/* Search Examples */}
+        <div className="text-center text-xs text-muted-foreground p-4 bg-muted/30 rounded-lg">
+          <span className="font-medium">Search examples:</span> Block: 12345 • Transaction: 0x1a2b3c... • Address: 0x742d35... • ENS: vitalik.eth
         </div>
 
         <div className="flex justify-between items-center mb-4">
