@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import { getAlchemyInstance, getNativeCurrency } from "@/lib/alchemy";
+import { useNetwork } from "@/contexts/NetworkContext";
 import { ethers } from "ethers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,9 +9,27 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Navigation } from "@/components/Navigation";
+import { Footer } from "@/components/Footer";
+import { CopyButton } from "@/components/CopyButton";
+
+const getGasUnit = (chainId: string): string => {
+  const gasUnits: Record<string, string> = {
+    ethereum: "Gwei",
+    polygon: "Gwei", 
+    bsc: "Gwei",
+    avalanche: "nAVAX",
+    optimism: "Gwei",
+    arbitrum: "Gwei",
+    base: "Gwei",
+    bitcoin: "sat/vB",
+    soneium: "Gwei",
+  };
+  return gasUnits[chainId] || "Gwei";
+};
 
 const TransactionDetails = () => {
   const { txHash } = useParams();
+  const { selectedNetwork } = useNetwork();
   const [transaction, setTransaction] = useState<any>(null);
   const [receipt, setReceipt] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -18,9 +38,10 @@ const TransactionDetails = () => {
   useEffect(() => {
     const fetchTransaction = async () => {
       try {
-        const provider = new ethers.JsonRpcProvider("https://eth-mainnet.g.alchemy.com/v2/demo");
-        const tx = await provider.getTransaction(txHash!);
-        const txReceipt = await provider.getTransactionReceipt(txHash!);
+        const alchemy = getAlchemyInstance(selectedNetwork);
+        
+        const tx = await alchemy.core.getTransaction(txHash!);
+        const txReceipt = await alchemy.core.getTransactionReceipt(txHash!);
         
         if (tx) {
           setTransaction(tx);
@@ -45,7 +66,7 @@ const TransactionDetails = () => {
     };
 
     fetchTransaction();
-  }, [txHash, toast]);
+  }, [txHash, selectedNetwork, toast]);
 
   if (loading) {
     return (
@@ -68,7 +89,7 @@ const TransactionDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation showNetworkSelector={false} />
       
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
@@ -138,7 +159,10 @@ const TransactionDetails = () => {
               </div>
               <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
                 <span className="text-muted-foreground font-medium">Transaction Hash:</span>
-                <span className="font-mono text-xs sm:text-sm break-all text-right">{transaction.hash}</span>
+                <div className="flex items-center gap-2 justify-end">
+                  <span className="font-mono text-xs sm:text-sm break-all text-right">{transaction.hash}</span>
+                  <CopyButton text={transaction.hash} />
+                </div>
               </div>
               {transaction.blockNumber && (
                 <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
@@ -150,9 +174,12 @@ const TransactionDetails = () => {
               )}
               <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
                 <span className="text-muted-foreground font-medium">From:</span>
-                <Link to={`/address/${transaction.from}`} className="font-mono text-xs sm:text-sm text-primary hover:underline break-all text-right">
-                  {transaction.from}
-                </Link>
+                <div className="flex items-center gap-2 justify-end">
+                  <Link to={`/address/${transaction.from}`} className="font-mono text-xs sm:text-sm text-primary hover:underline break-all text-right">
+                    {transaction.from}
+                  </Link>
+                  <CopyButton text={transaction.from} />
+                </div>
               </div>
               <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
                 <span className="text-muted-foreground font-medium">To:</span>
@@ -167,13 +194,13 @@ const TransactionDetails = () => {
               <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
                 <span className="text-muted-foreground font-medium">Value:</span>
                 <span className="font-mono font-semibold text-primary">
-                  {ethers.formatEther(transaction.value)} ETH
+                  {ethers.formatEther(transaction.value.toString())} {getNativeCurrency(selectedNetwork)}
                 </span>
               </div>
               <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
                 <span className="text-muted-foreground font-medium">Gas Price:</span>
                 <span className="font-mono">
-                  {transaction.gasPrice ? ethers.formatUnits(transaction.gasPrice, "gwei") : "N/A"} Gwei
+                  {transaction.gasPrice ? ethers.formatUnits(transaction.gasPrice.toString(), "gwei") : "N/A"} {getGasUnit(selectedNetwork)}
                 </span>
               </div>
               {receipt && (
@@ -204,6 +231,7 @@ const TransactionDetails = () => {
           </CardContent>
         </Card>
       </main>
+      <Footer />
     </div>
   );
 };

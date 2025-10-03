@@ -1,24 +1,30 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ethers } from "ethers";
+import { getAlchemyInstance, getNativeCurrency } from "@/lib/alchemy";
+import { useNetwork } from "@/contexts/NetworkContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Blocks, Clock, Zap, Database } from "lucide-react";
+import { ArrowLeft, Blocks, Clock, Zap, Database, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Navigation } from "@/components/Navigation";
+import { Footer } from "@/components/Footer";
+import { Input } from "@/components/ui/input";
 
 const BlockDetails = () => {
   const { blockNumber } = useParams();
+  const { selectedNetwork } = useNetwork();
   const [block, setBlock] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [displayCount, setDisplayCount] = useState(15);
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchBlock = async () => {
       try {
-        const provider = new ethers.JsonRpcProvider("https://eth-mainnet.g.alchemy.com/v2/demo");
-        const blockData = await provider.getBlock(Number(blockNumber), true);
+        const alchemy = getAlchemyInstance(selectedNetwork);
+        const blockData = await alchemy.core.getBlockWithTransactions(Number(blockNumber));
         
         if (blockData) {
           setBlock(blockData);
@@ -42,7 +48,8 @@ const BlockDetails = () => {
     };
 
     fetchBlock();
-  }, [blockNumber, toast]);
+  }, [blockNumber, selectedNetwork, toast]);
+
 
   if (loading) {
     return (
@@ -65,7 +72,7 @@ const BlockDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation showNetworkSelector={false} />
       
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
@@ -150,7 +157,7 @@ const BlockDetails = () => {
               <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
                 <span className="text-muted-foreground font-medium">Miner:</span>
                 <Link to={`/address/${block.miner}`} className="font-mono text-sm text-primary hover:underline break-all">
-                  {block.miner}
+                  {block.miner || 'N/A'}
                 </Link>
               </div>
               <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b gap-2">
@@ -172,38 +179,81 @@ const BlockDetails = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Transactions</CardTitle>
-            <CardDescription>{block.transactions.length} transactions in this block</CardDescription>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <CardTitle>Transactions</CardTitle>
+                <CardDescription>{block.transactions.length} transactions in this block</CardDescription>
+              </div>
+              <div className="w-full sm:w-auto">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Search transactions..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full sm:w-64"
+                  />
+                  <Button variant="outline" size="icon">
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Search by: Transaction hash, From address, To address
+                </div>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {block.transactions.map((tx: any, index: number) => (
-                <Link
-                  key={index}
-                  to={`/tx/${typeof tx === 'string' ? tx : tx.hash}`}
-                  className="block p-4 rounded-lg border hover:bg-accent transition-colors"
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-mono text-sm text-primary mb-1">
-                        {typeof tx === 'string' ? tx.slice(0, 20) : tx.hash.slice(0, 20)}...
-                      </div>
-                      {typeof tx !== 'string' && (
-                        <div className="text-xs text-muted-foreground">
-                          From: {tx.from.slice(0, 10)}... → To: {tx.to ? tx.to.slice(0, 10) + '...' : 'Contract Creation'}
+              {block.transactions
+                .filter((tx: any) => {
+                  if (!searchQuery) return true;
+                  const txHash = typeof tx === 'string' ? tx : tx.hash;
+                  const from = typeof tx !== 'string' ? tx.from : '';
+                  const to = typeof tx !== 'string' ? tx.to : '';
+                  return txHash.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         from.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         to.toLowerCase().includes(searchQuery.toLowerCase());
+                })
+                .slice(0, displayCount)
+                .map((tx: any, index: number) => (
+                  <Link
+                    key={index}
+                    to={`/tx/${typeof tx === 'string' ? tx : tx.hash}`}
+                    className="block p-4 rounded-lg border hover:bg-accent transition-colors"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-mono text-sm text-primary mb-1">
+                          {typeof tx === 'string' ? tx.slice(0, 20) : tx.hash.slice(0, 20)}...
                         </div>
-                      )}
+                        {typeof tx !== 'string' && (
+                          <div className="text-xs text-muted-foreground">
+                            From: {tx.from?.slice(0, 10) || 'N/A'}... → To: {tx.to ? tx.to.slice(0, 10) + '...' : 'Contract Creation'}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {typeof tx !== 'string' && tx.value ? `${(Number(tx.value) / 1e18).toFixed(4)} ${getNativeCurrency(selectedNetwork)}` : `Tx #${index}`}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      Tx #{index}
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                ))
+              }
             </div>
+            {displayCount < block.transactions.length && (
+              <div className="mt-4 text-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setDisplayCount(prev => prev + 15)}
+                >
+                  Load More ({Math.min(15, block.transactions.length - displayCount)} more)
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
+      <Footer />
     </div>
   );
 };

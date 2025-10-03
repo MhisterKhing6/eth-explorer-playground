@@ -3,28 +3,54 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Moon, Sun, Blocks } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNetwork } from "@/contexts/NetworkContext";
 
 const chains = [
-  { id: "ethereum", name: "Ethereum", rpc: "https://eth-mainnet.g.alchemy.com/v2/demo" },
-  { id: "polygon", name: "Polygon", rpc: "https://polygon-mainnet.g.alchemy.com/v2/demo" },
-  { id: "bsc", name: "BNB Chain", rpc: "https://bsc-dataseed.binance.org/" },
-  { id: "arbitrum", name: "Arbitrum", rpc: "https://arb1.arbitrum.io/rpc" },
+  { id: "bitcoin", name: "Bitcoin (BTC)" },
+  { id: "ethereum", name: "Ethereum (ETH)" },
+  { id: "bsc", name: "BNB Chain (BNB)" },
+  { id: "avalanche", name: "Avalanche (AVAX)" },
+  { id: "polygon", name: "Polygon (MATIC)" },
+  { id: "optimism", name: "Optimism L2 (ETH)" },
+  { id: "arbitrum", name: "Arbitrum L2 (ETH)" },
+  { id: "base", name: "Base L2 (ETH)" },
+  { id: "soneium", name: "Soneium L2 (SONEIUM)" },
 ];
 
-export const Navigation = () => {
+interface NavigationProps {
+  showNetworkSelector?: boolean;
+}
+
+export const Navigation = ({ showNetworkSelector = true }: NavigationProps) => {
   const location = useLocation();
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [selectedChain, setSelectedChain] = useState("ethereum");
+  const { selectedNetwork, setSelectedNetwork } = useNetwork();
 
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
-    setTheme(isDark ? "dark" : "light");
+    const savedTheme = localStorage.getItem("theme");
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    const initialTheme = savedTheme || systemTheme;
+    
+    setTheme(initialTheme as "light" | "dark");
+    
+    if (initialTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
-    document.documentElement.classList.toggle("dark");
+    
+    if (newTheme === "dark") {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
   };
 
   return (
@@ -36,24 +62,26 @@ export const Navigation = () => {
               <Blocks className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">BlockScout</h1>
+              <h1 className="text-xl font-bold">ChainExplorer</h1>
               <p className="text-xs text-muted-foreground">Multi-Chain Explorer</p>
             </div>
           </Link>
 
           <div className="flex items-center gap-3">
-            <Select value={selectedChain} onValueChange={setSelectedChain}>
-              <SelectTrigger className="w-[180px] bg-background">
-                <SelectValue placeholder="Select chain" />
-              </SelectTrigger>
-              <SelectContent className="bg-card z-50">
-                {chains.map((chain) => (
-                  <SelectItem key={chain.id} value={chain.id}>
-                    {chain.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {showNetworkSelector && (
+              <Select value={selectedNetwork} onValueChange={setSelectedNetwork}>
+                <SelectTrigger className="w-[180px] bg-background">
+                  <SelectValue placeholder="Select chain" />
+                </SelectTrigger>
+                <SelectContent className="bg-card z-50">
+                  {chains.map((chain) => (
+                    <SelectItem key={chain.id} value={chain.id}>
+                      {chain.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             <Button
               variant="ghost"

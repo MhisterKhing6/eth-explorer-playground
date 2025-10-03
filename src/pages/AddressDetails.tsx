@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ethers } from "ethers";
+import { getAlchemyInstance, getNativeCurrency, fetchTokenPrice } from "@/lib/alchemy";
+import { useNetwork } from "@/contexts/NetworkContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,14 +10,20 @@ import { ArrowLeft, Wallet, Search, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Navigation } from "@/components/Navigation";
 import { MetricCard } from "@/components/MetricCard";
+import { Footer } from "@/components/Footer";
 
 const AddressDetails = () => {
   const { address: paramAddress } = useParams();
+  const { selectedNetwork } = useNetwork();
   const [address, setAddress] = useState(paramAddress || "");
   const [balance, setBalance] = useState<string>("");
   const [transactionCount, setTransactionCount] = useState<number>(0);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [currentPrice, setCurrentPrice] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [searchAddress, setSearchAddress] = useState("");
+  const [txSearchQuery, setTxSearchQuery] = useState("");
+  const [displayTxCount, setDisplayTxCount] = useState(20);
   const { toast } = useToast();
 
   const fetchAddressData = async (addr: string) => {
@@ -30,12 +38,51 @@ const AddressDetails = () => {
 
     setLoading(true);
     try {
-      const provider = new ethers.JsonRpcProvider("https://eth-mainnet.g.alchemy.com/v2/demo");
-      const bal = await provider.getBalance(addr);
-      const txCount = await provider.getTransactionCount(addr);
+      const alchemy = getAlchemyInstance(selectedNetwork);
       
-      setBalance(ethers.formatEther(bal));
+      // Fetch current price and balance in parallel
+      const [bal, txCount, priceStr] = await Promise.all([
+        alchemy.core.getBalance(addr),
+        alchemy.core.getTransactionCount(addr),
+        fetchTokenPrice(selectedNetwork)
+      ]);
+      
+      // Extract numeric price from string like "$2,247.82"
+      const price = parseFloat(priceStr.replace(/[$,]/g, '')) || 0;
+      setCurrentPrice(price);
+      
+      // Get transaction history with network-specific categories
+      const getCategories = (network: string) => {
+        // Networks that don't support "internal" category
+        const noInternalSupport = ['bsc', 'optimism', 'arbitrum', 'base', 'soneium'];
+        if (noInternalSupport.includes(network)) {
+          return ["external", "erc20"];
+        }
+        return ["external", "internal", "erc20"];
+      };
+      
+      const categories = getCategories(selectedNetwork);
+      
+      const transfers = await alchemy.core.getAssetTransfers({
+        fromAddress: addr,
+        category: categories,
+        maxCount: 50,
+        order: "desc"
+      });
+      
+      const receivedTransfers = await alchemy.core.getAssetTransfers({
+        toAddress: addr,
+        category: categories,
+        maxCount: 50,
+        order: "desc"
+      });
+      
+      const allTransfers = [...transfers.transfers, ...receivedTransfers.transfers]
+        .sort((a, b) => (b.blockNum || 0) - (a.blockNum || 0));
+      
+      setBalance(ethers.formatEther(bal.toString()));
       setTransactionCount(txCount);
+      setTransactions(allTransfers);
       setAddress(addr);
     } catch (error) {
       console.error("Error fetching address data:", error);
@@ -53,7 +100,7 @@ const AddressDetails = () => {
     if (paramAddress) {
       fetchAddressData(paramAddress);
     }
-  }, [paramAddress]);
+  }, [paramAddress, selectedNetwork]);
 
   const handleSearch = () => {
     if (searchAddress.trim()) {
@@ -63,7 +110,7 @@ const AddressDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation showNetworkSelector={false} />
       
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
@@ -98,6 +145,9 @@ const AddressDetails = () => {
                   Search
                 </Button>
               </div>
+              <div className="mt-3 text-xs text-muted-foreground">
+                <span className="font-medium">Supported formats:</span> 0x742d35Cc6634C0532925a3b8D39C4E3C7b4dd4c2 • ENS domains (coming soon)
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -121,9 +171,9 @@ const AddressDetails = () => {
             <div className="grid gap-4 md:grid-cols-2 mb-8">
               <MetricCard
                 title="Balance"
-                value={`${parseFloat(balance).toFixed(6)} ETH`}
+                value={`${parseFloat(balance).toFixed(6)} ${getNativeCurrency(selectedNetwork)}`}
                 icon={Wallet}
-                description={`~$${(parseFloat(balance) * 2247.82).toFixed(2)} USD`}
+                description={currentPrice > 0 ? `~$${(parseFloat(balance) * currentPrice).toLocaleString(undefined, { maximumFractionDigits: 2 })} USD` : "Price loading..."}
               />
               <MetricCard
                 title="Total Transactions"
@@ -135,18 +185,107 @@ const AddressDetails = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Additional Information</CardTitle>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <CardTitle>Transaction History</CardTitle>
+                    <CardDescription>Showing {transactions.length} transactions (up to 100 total)</CardDescription>
+                  </div>
+                  <div className="w-full sm:w-auto">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Search transactions..."
+                        value={txSearchQuery}
+                        onChange={(e) => setTxSearchQuery(e.target.value)}
+                        className="w-full sm:w-64"
+                      />
+                      <Button variant="outline" size="icon">
+                        <Search className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Search by: Hash, Address, Amount
+                    </div>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4 text-sm text-muted-foreground">
-                  <p>
-                    This address has made {transactionCount} transactions on the Ethereum network.
+                {transactions.length > 0 ? (
+                  <>
+                    <div className="space-y-2">
+                      {transactions
+                        .filter((tx) => {
+                          if (!txSearchQuery) return true;
+                          const hash = tx.hash?.toLowerCase() || '';
+                          const from = tx.from?.toLowerCase() || '';
+                          const to = tx.to?.toLowerCase() || '';
+                          const value = tx.value?.toString() || '';
+                          const query = txSearchQuery.toLowerCase();
+                          return hash.includes(query) || from.includes(query) || to.includes(query) || value.includes(query);
+                        })
+                        .slice(0, displayTxCount)
+                        .map((tx, index) => (
+                          <Link
+                            key={index}
+                            to={`/tx/${tx.hash}`}
+                            className="block p-4 rounded-lg border hover:bg-accent transition-colors"
+                          >
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-mono text-sm text-primary mb-1">
+                                  {tx.hash?.slice(0, 20)}...
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {tx.from === address.toLowerCase() ? 'Sent to' : 'Received from'}: {' '}
+                                  {tx.from === address.toLowerCase() 
+                                    ? tx.to?.slice(0, 10) + '...' 
+                                    : tx.from?.slice(0, 10) + '...'}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-medium">
+                                  {tx.value ? `${parseFloat(tx.value).toFixed(4)} ${tx.asset || getNativeCurrency(selectedNetwork)}` : 'N/A'}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Block #{tx.blockNum}
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        ))
+                      }
+                    </div>
+                    {displayTxCount < transactions.filter((tx) => {
+                      if (!txSearchQuery) return true;
+                      const hash = tx.hash?.toLowerCase() || '';
+                      const from = tx.from?.toLowerCase() || '';
+                      const to = tx.to?.toLowerCase() || '';
+                      const value = tx.value?.toString() || '';
+                      const query = txSearchQuery.toLowerCase();
+                      return hash.includes(query) || from.includes(query) || to.includes(query) || value.includes(query);
+                    }).length && (
+                      <div className="mt-4 text-center">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setDisplayTxCount(prev => prev + 20)}
+                        >
+                          Load More ({Math.min(20, transactions.filter((tx) => {
+                            if (!txSearchQuery) return true;
+                            const hash = tx.hash?.toLowerCase() || '';
+                            const from = tx.from?.toLowerCase() || '';
+                            const to = tx.to?.toLowerCase() || '';
+                            const value = tx.value?.toString() || '';
+                            const query = txSearchQuery.toLowerCase();
+                            return hash.includes(query) || from.includes(query) || to.includes(query) || value.includes(query);
+                          }).length - displayTxCount)} more)
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">
+                    No transaction history found for this address
                   </p>
-                  <p>
-                    Note: Transaction history requires additional API calls. Use Alchemy SDK or Etherscan API
-                    for complete transaction history.
-                  </p>
-                </div>
+                )}
               </CardContent>
             </Card>
           </>
@@ -171,6 +310,7 @@ const AddressDetails = () => {
           </Card>
         )}
       </main>
+      <Footer />
     </div>
   );
 };
