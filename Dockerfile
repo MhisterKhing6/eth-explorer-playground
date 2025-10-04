@@ -2,8 +2,12 @@
 FROM node:18-alpine AS builder
 
 WORKDIR /app
+
+# Copy package files first for better caching
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --prefer-offline --no-audit
+
+# Copy source code
 COPY . .
 RUN npm run build
 

@@ -17,8 +17,8 @@ cd /home/ec2-user
 git clone https://github.com/MhisterKhing6/eth-explorer-playground.git
 cd eth-explorer-playground
 
-# Build Docker image
-docker build -t chainexplorer .
+# Build Docker image with optimizations
+docker build -t chainexplorer . --no-cache
 
 # Run the container
 docker run -d -p 80:8080 --name chainexplorer-app --restart unless-stopped chainexplorer
